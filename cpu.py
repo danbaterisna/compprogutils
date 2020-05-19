@@ -112,7 +112,7 @@ def add_solution(args):
     if args.name is None:
         args.name = os.path.splitext(args.file_name)[0]
     utilities.requireFileExists(args.file_name)
-    with manifests.modifyManifests("problem") as m:
+    with manifests.modifyManifest("problem") as m:
         m["solutions"][args.name] = solutions.Solution(args.name, args.file_name)
     print(f"Solution {args.name} added")
 
