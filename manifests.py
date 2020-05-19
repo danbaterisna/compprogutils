@@ -69,23 +69,17 @@ def saveManifestTo(m, fileName):
     with open(fileName, "w") as f:
         return json.dump(m, f, cls=ManifestEncoder, indent=2)
 
+def loadManifestType(mtype):
+    """ Retrieve the manifest with the given type. """
+    requireManifest(mtype)
+    return loadManifestFrom(f".cpu.{mtype}_manifest.json")
+
 @contextmanager
-def modifyManifest(fileName):
+def modifyManifest(mtype):
     """ Context manager for manipulating a manifest file. """
+    fileName = f".cpu.{mtype}_manifest.json"
+    requireManifest(mtype)
     loadedM = loadManifestFrom(fileName)
     yield loadedM
     saveManifestTo(loadedM, fileName)
-
-
-class ManifestChange:
-    """ Context manager for manipulating a manifest file. """
-    def __init__(self, fileName):
-        self.fileName = fileName
-        self.manifestIn = loadManifestFrom(fileName)
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, exc_traceback):
-        saveManifestTo(self.manifestIn, self.fileName)
 

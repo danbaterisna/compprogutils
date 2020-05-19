@@ -51,9 +51,8 @@ def _add_problem(problemName):
     - create a directory for the problem
     - create an empty manifest file for the problem
     - create the programs/ directory for the problem."""
-    manifests.requireManifest("contest")
-    with manifests.ManifestChange(".cpu.contest_manifest.json") as m:
-        m.manifestIn[problemName] = os.path.join(problemName, "")
+    with manifests.modifyManifest("problem") as m:
+        m[problemName] = os.path.join(problemName, "")
     os.mkdir(problemName)
     with utilities.cd(problemName):
         shutil.copyfile(os.path.join(configuration.CONF_DIRECTORY, "default_manifest.json"), \
@@ -113,9 +112,8 @@ def add_solution(args):
     if args.name is None:
         args.name = os.path.splitext(args.file_name)[0]
     utilities.requireFileExists(args.file_name)
-    manifests.requireManifest("problem")
-    with manifests.ManifestChange(".cpu.problem_manifest.json") as m:
-        m.manifestIn["solutions"][args.name] = solutions.Solution(args.name, args.file_name)
+    with manifests.modifyManifests("problem") as m:
+        m["solutions"][args.name] = solutions.Solution(args.name, args.file_name)
     print(f"Solution {args.name} added")
 
 @subcommand(argument("sol_name", type=str), \
@@ -123,10 +121,9 @@ def add_solution(args):
 def compile_solution(args):
     """ Compile the registered solution. If -c is given, use the
         custom compilation command as stated in the config file. """
-    manifests.requireManifest("problem")
-    with manifests.ManifestChange(".cpu.problem_manifest.json") as m:
-        utilities.requirePresentKey(m.manifestIn["solutions"], args.sol_name, "solution")
-        m.manifestIn["solutions"][args.sol_name].compile(args.custom_compile, os.path.join("programs", "solutions"))
+    with manifests.modifyManifest("problem") as m:
+        utilities.requirePresentKey(m["solutions"], args.sol_name, "solution")
+        m["solutions"][args.sol_name].compile(args.custom_compile, os.path.join("programs", "solutions"))
 
 @subcommand(argument("sol_name", type=str),
             argument("--time-limit", "-t", type=int),
@@ -135,14 +132,13 @@ def compile_solution(args):
 def run_solution(args):
     """ Run the registered solution. Receive input from STDIN (or the specified test)
     and output to STDOUT. Print additional information if -s is not given."""
-    manifests.requireManifest("problem")
-    with manifests.ManifestChange(".cpu.problem_manifest.json") as m:
-        utilities.requirePresentKey(m.manifestIn["solutions"], args.sol_name, "solution")
-        solExec = m.manifestIn["solutions"][args.sol_name]
+    with manifests.modifyManifest("problem") as m:
+        utilities.requirePresentKey(m["solutions"], args.sol_name, "solution")
+        solExec = m["solutions"][args.sol_name]
         solResult = None
         if args.input_test is not None:
-            utilities.requirePresentKey(m.manifestIn["tests"], args.input_test, "test")
-            testOrigin = m.manifestIn["tests"][args.input_test]
+            utilities.requirePresentKey(m["tests"], args.input_test, "test")
+            testOrigin = m["tests"][args.input_test]
             with testOrigin.getFileObject(tests.TestFile.INPUT) as inputFile:
                 solResult = solExec.run(timeout = args.time_limit, fileInput = inputFile)
                 print(solResult.output)
@@ -157,24 +153,22 @@ def run_solution(args):
 @subcommand(argument("sol_name", type=str))
 def delete_solution(args):
     """ Delete the solution with the given name. """
-    manifests.requireManifest("problem")
-    with manifests.ManifestChange(".cpu.problem_manifest.json") as m:
-        utilities.requirePresentKey(m.manifestIn["solutions"], args.sol_name, "solution")
-        execToRemove = m.manifestIn["solutions"][args.sol_name]
+    with manifests.modifyManifest("problem") as m:
+        utilities.requirePresentKey(m["solutions"], args.sol_name, "solution")
+        execToRemove = m["solutions"][args.sol_name]
         execToRemove.deleteExecutable()
-        del m.manifestIn["solutions"][args.sol_name]
+        del m["solutions"][args.sol_name]
     print(f"Solution {args.sol_name} deleted!")
 
 @subcommand(argument("file_name", type=str),
             argument("--name", "-n", type=str))
 def add_generator(args):
     """ Add an input generator. If --name is not given, use file_name after stripping extensions."""
-    manifests.requireManifest("problem")
     utilities.requireFileExists(args.file_name)
     if args.name is None:
         args.name = os.path.splitext(args.file_name)[0]
-    with manifests.ManifestChange(".cpu.problem_manifest.json") as m:
-        m.manifestIn["generators"][args.name] = executables.Executable(args.name, args.file_name)
+    with manifests.modifyManifest("problem") as m:
+        m["generators"][args.name] = executables.Executable(args.name, args.file_name)
     print(f"Generator {args.name} added!")
 
 @subcommand(argument("--with-gen", "-g", type=str))
@@ -182,9 +176,8 @@ def add_test(args):
     """ Add a new test, reading data from stdin. Use an EOF signal (Ctrl-D) to
     separate test input and test output, and to end test output. If --with-gen
     is provided, use the stdout of the given generator program as input. """
-    manifests.requireManifest("problem")
-    with manifests.ManifestChange(".cpu.problem_manifest.json") as m:
-        newTest = tests.getUnusedTest(m.manifestIn["tests"])
+    with manifests.modifyManifest("problem") as m:
+        newTest = tests.getUnusedTest(m["tests"])
         if args.with_gen is None:
             print(f"Test {newTest.ID} created. Now reading input...")
             newTest.writeToTestFile(tests.TestFile.INPUT, generators.fetchInputUntilEOF())
@@ -194,9 +187,9 @@ def add_test(args):
         else:
             genExec = generators.getGen(args.with_gen)
             print(f"Test {newTest.ID} created. Calling generator...")
-            genExec.run(fileToWrite = newTest.getFileObject(test.TestFile.INPUT, "wb"))
+            genExec.run(fileToWrite = newTest.getFileObject(tests.TestFile.INPUT, "wb"))
             print(f"Test generated successfully!")
-        m.manifestIn["tests"][newTest.ID] = newTest
+        m["tests"][newTest.ID] = newTest
 
 @subcommand(argument("sol_name", type=str),
             argument("--timeout", "-t", type=int),
@@ -205,8 +198,7 @@ def make_output(args):
     """ Use the sol in sol_name to generate the output for the tests listed. If no tests are listed,
     the output generator is run for all tests. If --timeout is given, stop running the solution after
     -t seconds. """
-    manifests.requireManifest("problem")
-    mf = manifests.loadManifestFrom(".cpu.problem_manifest.json")
+    mf = manifests.loadManifestType("problem")
     if args.tests == []:
         args.tests = list(mf["tests"].keys())
     for testName in args.tests:
@@ -227,8 +219,7 @@ def make_output(args):
 def list_tests(args):
     """ List down the tests in `tests` for this problem. Only show up to TRUNCATE lines (default 3).
     If -s is enabled, do not show test contents. If no `tests` are given, output all tests. """
-    manifests.requireManifest("problem")
-    mf = manifests.loadManifestFrom(".cpu.problem_manifest.json")
+    mf = manifests.loadManifestType("problem")
     if args.tests == []:
         args.tests = list(mf["tests"].keys())
     for testName in args.tests:
@@ -242,18 +233,17 @@ def list_tests(args):
 @subcommand(argument("tests", type=str, nargs="*"))
 def delete_tests(args):
     """ Delete the tests in `tests`. """
-    manifests.requireManifest("problem")
-    with manifests.ManifestChange(".cpu.problem_manifest.json") as m:
+    with manifests.modifyManifest("problem") as m:
         if args.tests == []:
             if utilities.confirmPrompt("You are about to delete all tests. Proceed? (y/n) "):
-                args.tests = list(m.manifestIn["tests"].keys())
+                args.tests = list(m["tests"].keys())
             else:
                 return
         for testName in args.tests:
-            utilities.requirePresentKey(m.manifestIn["tests"], testName, "test")
+            utilities.requirePresentKey(m["tests"], testName, "test")
         for testName in args.tests:
-            m.manifestIn["tests"][testName].deleteFiles()
-            del m.manifestIn["tests"][testName]
+            m["tests"][testName].deleteFiles()
+            del m["tests"][testName]
             print(f"Test {testName} deleted")
 
 
