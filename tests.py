@@ -49,13 +49,16 @@ class Test:
         """ Calls `open` on the specified testFile. All other arguments are passed to `open`. """
         return open(self.fileTable[testFile], *args, **kwargs)
 
-    def getFileContents(self, testFile, default = "[None]"):
-        """ Returns a string with the contents of the file. If the file does not exist, return
-        default. All other arguments are passed to getFileObject. """
+    def getFileContents(self, testFile, default = "[None]", maxLines = None):
+        """ Returns a string with the contents of the file's first `maxLines` lines. If the file does not exist, return
+        default. """
         fileContents = default
         try:
             with self.getFileObject(testFile, "r") as fl:
-                fileContents = fl.read()
+                if maxLines is not None:
+                    fileContents = '\n'.join(itertools.islice(fl, maxLines))
+                else:
+                    fileContents = fl.read()
         except FileNotFoundError:
             pass
         return fileContents
@@ -86,9 +89,9 @@ class Test:
         if configuration.getConfig()["display_io_side_by_side"]:
             colWidth = (shutil.get_terminal_size().columns // 2) - 4
             table.table_data.append(["Input".ljust(colWidth), "Output".ljust(colWidth)])
-            inputLines = utilities.wrapStringList(self.getFileContents(TestFile.INPUT),
+            inputLines = utilities.wrapStringList(self.getFileContents(TestFile.INPUT, maxLines = maxLines),
                                               colWidth, maxLines)
-            outputLines = utilities.wrapStringList(self.getFileContents(TestFile.OUTPUT),
+            outputLines = utilities.wrapStringList(self.getFileContents(TestFile.OUTPUT, maxLines = maxLines),
                                                          colWidth, maxLines)
             tableHeight = max(len(inputLines), len(outputLines))
             inputLines = utilities.padListRight(inputLines, tableHeight, "")
@@ -99,10 +102,10 @@ class Test:
             colWidth = shutil.get_terminal_size().columns - 5
             table.inner_row_border = True
             table.table_data.append(["Input".ljust(colWidth)])
-            table.table_data.append([utilities.wrapString(self.getFileContents(TestFile.INPUT),
+            table.table_data.append([utilities.wrapString(self.getFileContents(TestFile.INPUT, maxLines = maxLines),
                                                          colWidth, maxLines)])
             table.table_data.append(["Output".ljust(colWidth)])
-            table.table_data.append([utilities.wrapString(self.getFileContents(TestFile.OUTPUT),
+            table.table_data.append([utilities.wrapString(self.getFileContents(TestFile.OUTPUT, maxLines = maxLines),
                                                          colWidth, maxLines)])
             return table
 
