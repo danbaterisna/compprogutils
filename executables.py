@@ -104,7 +104,7 @@ compilation command {compileCommand} used. Make sure the corresponding key exist
 
     def __serialize__(self):
         """ Return a JSON-serializable dict which decodes to an equivalent executable. """
-        return {"_custom_type" : "Executable",
+        return {"_custom_type" : self.__class__.__name__,
                 "name" : self.name,
                 "src" : self.src,
                 "exec_loc" : self.exec_loc}
@@ -113,7 +113,7 @@ compilation command {compileCommand} used. Make sure the corresponding key exist
 
     @classmethod
     def __deserialize__(cls, obj):
-        result =  Executable(obj["name"], obj["src"])
+        result =  cls(obj["name"], obj["src"])
         result.exec_loc = obj["exec_loc"]
         return result
 
@@ -127,11 +127,6 @@ class NonLocalExecutable(Executable):
     def __init__(self, name, src, exec_loc):
         super().__init__(name, src)
         self.exec_loc = exec_loc
-
-    def __serialize__(self):
-        result = super().__serialize__()
-        result["_custom_type"] = "NonLocalExecutable"
-        return result
 
     @classmethod
     def __deserialize__(cls, obj):

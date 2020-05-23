@@ -33,13 +33,4 @@ class Solution(executables.Executable):
             result.data = outputSplit[1]
         return result
 
-    def __serialize__(self):
-        result = super().__serialize__()
-        result["_custom_type"] = "Solution"
-        return result
 
-    @classmethod
-    def __deserialize__(self, obj):
-        result = Solution(obj["name"], obj["src"])
-        result.exec_loc = obj["exec_loc"]
-        return result
