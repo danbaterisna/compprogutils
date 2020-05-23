@@ -24,9 +24,9 @@ class StringParser:
             charsRead.append(cChar)
             self.curID += 1
         return ''.join(charsRead)
-    def readDataFromString(self, dataType, delineator = WHITESPACE, skipOver = True):
+    def readDataFromString(self, dataType, charSet = WHITESPACE, skipOver = True):
         """ Read a single member of dataType from the string. dataType should have
         a constructor that accepts a string. Raises ValueError if it is not found. """
-        possibleInt = self.readUntil(delineator, skipOver)
+        possibleInt = self.readUntil(charSet, skipOver)
         return dataType(possibleInt)
 
