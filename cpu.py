@@ -23,6 +23,8 @@ import terminaltables
 # For working with solutions
 import solutions
 
+import checkers
+
 import utilities, configuration
 
 parser = ap.ArgumentParser(description = """Competitive programming utilities.
@@ -171,6 +173,17 @@ def add_generator(args):
         m["generators"][args.name] = executables.Executable(args.name, args.file_name)
     print(f"Generator {args.name} added!")
 
+@subcommand(argument("file_name", type=str),
+            argument("--name", "-n", type=str))
+def add_checker(args):
+    """ Add a test checker. If --name is not given, use file_name after stripping extensions. """
+    utilities.requireFileExists(args.file_name)
+    if args.name is None:
+        args.name = os.path.splitext(args.file_name)[0]
+    with manifests.modifyManifest("problem") as m:
+        m["checkers"][args.name] = checkers.Checker(args.name, args.file_name)
+    print(f"Checker {args.name} added!")
+
 @subcommand(argument("--with-gen", "-g", type=str))
 def add_test(args):
     """ Add a new test, reading data from stdin. Use an EOF signal (Ctrl-D) to
@@ -213,6 +226,50 @@ def make_output(args):
                 solExec.run(fileInput = inputFile, fileToWrite = outputFile, timeout = args.timeout)
         print(f"Output generated!")
 
+@subcommand(argument("sol_name", type=str),
+            argument("--checker", "-c", type=str),
+            argument("--timeout", "-t", type=int),
+            argument("tests", type=str, nargs="*"))
+def test_solution(args):
+    """ Run `tests` on the given solution. If tests is not given, use all tests. If --checker is given,
+    use the custom checker indicated. If --timeout is given, stop running the solution after -t seconds. """
+    mf = manifests.loadManifestType("problem")
+    if args.tests == []:
+        args.tests = list(mf["tests"].keys())
+    for testName in args.tests:
+        utilities.requirePresentKey(mf["tests"], testName, "test")
+    utilities.requirePresentKey(mf["solutions"], args.sol_name, "solution")
+    utilities.requirePresentKey(mf["checkers"], args.checker, "checker")
+    testsToRun = {testName: mf["tests"][testName] for testName in args.tests}
+    solExec = mf["solutions"][args.sol_name]
+    checkerExec = mf["checkers"][args.checker]
+    checkerExec.compile(outputDirectory = os.path.join("programs", "checkers"))
+    print(f"All info ready. Running tests:")
+    for testName, testPackage in testsToRun.items():
+        print(testPackage.testDisplayTable(maxLines = 10).table)
+        if not testPackage.checkFileExists(tests.TestFile.OUTPUT):
+            print(f"!!! Test has no output to check, skipping")
+            continue
+        outputCheckName = f"{args.sol_name}_out.txt"
+        with open(outputCheckName, "w") as outputToCheck:
+            with testPackage.getFileObject(tests.TestFile.INPUT, "r") as testInput:
+                solExec.run(timeout = args.timeout, fileInput = testInput,
+                            fileToWrite = outputToCheck)
+        print(f"Solution output [TODO]")
+        score, notes = checkerExec.checkOutputFile(testPackage, outputCheckName)
+        print(f"Checker notes: {notes}")
+        if score < 0:
+            print(f"Checker verdict: Judgment Failure [{score}]")
+        elif score == 0:
+            print(f"Checker verdict: Wrong Answer [{score:.2f}]")
+        elif score < 1:
+            print(f"Checker verdict: Partially Correct [{score:.2f}]")
+        elif score == 1:
+            print(f"Checker verdict: Accepted [{score:.2f}]")
+        else:
+            print(f"!!! Unknown checker verdict [{score:.2f}]")
+        print("\n", end="")
+
 @subcommand(argument("--summary", "-s", action="store_true"),
             argument("--truncate", "-t", type=int, default=5),
             argument("tests", type=str, nargs="*"))
@@ -245,7 +302,6 @@ def delete_tests(args):
             m["tests"][testName].deleteFiles()
             del m["tests"][testName]
             print(f"Test {testName} deleted")
-
 
 if __name__ == "__main__":
     args = parser.parse_args()
