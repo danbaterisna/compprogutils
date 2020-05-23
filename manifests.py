@@ -11,7 +11,7 @@
 
 import json, os
 
-import executables, tests, solutions
+import executables, tests, solutions, checkers
 
 from contextlib import contextmanager
 
@@ -33,7 +33,8 @@ def requireManifest(mtype):
         raise NotInCPUDirectory(f"""cpu does not recognize the directory you are in. Make sure
 you are in a cpu directory. Look for the .cpu.{mtype}_manifest file.""")
 
-CUSTOM_CLASSES = [executables.Executable, tests.Test, executables.NonLocalExecutable, solutions.Solution]
+CUSTOM_CLASSES = [executables.Executable, tests.Test, executables.NonLocalExecutable, solutions.Solution,
+                  checkers.Checker]
 TYPE_NAMES = {cls.__name__: cls for cls in CUSTOM_CLASSES}
 
 class ManifestEncoder(json.JSONEncoder):
