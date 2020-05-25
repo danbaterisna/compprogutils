@@ -79,7 +79,7 @@ def loadManifestType(mtype):
     mret = loadManifestFrom(f".cpu.{mtype}_manifest.json")
     if mtype == "problem":
         globalManifest = loadManifestFrom(configuration.configFilePath("global_manifest.json"))
-        or localKey in mret:
+        for localKey in mret:
             if localKey not in globalManifest:
                 continue
             for globalInKey in globalManifest[localKey]:
