@@ -13,6 +13,8 @@ import json, os
 
 import executables, tests, solutions, checkers
 
+import configuration
+
 from contextlib import contextmanager
 
 def checkForManifest():
@@ -71,9 +73,20 @@ def saveManifestTo(m, fileName):
         return json.dump(m, f, cls=ManifestEncoder, indent=2)
 
 def loadManifestType(mtype):
-    """ Retrieve the manifest with the given type. """
+    """ Retrieve the manifest with the given type. If it is of the `problem` type,
+    include the information in the global_manifest."""
     requireManifest(mtype)
-    return loadManifestFrom(f".cpu.{mtype}_manifest.json")
+    mret = loadManifestFrom(f".cpu.{mtype}_manifest.json")
+    if mtype == "problem":
+        globalManifest = loadManifestFrom(configuration.configFilePath("global_manifest.json"))
+        or localKey in mret:
+            if localKey not in globalManifest:
+                continue
+            for globalInKey in globalManifest[localKey]:
+                if globalInKey in mret[localKey]:
+                    continue
+                mret[localKey][globalInKey] = globalManifest[localKey][globalInKey]
+    return mret
 
 @contextmanager
 def modifyManifest(mtype):

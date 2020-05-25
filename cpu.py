@@ -246,7 +246,7 @@ def test_solution(args):
     checkerExec.compile(outputDirectory = os.path.join("programs", "checkers"))
     print(f"All info ready. Running tests:")
     for testName, testPackage in testsToRun.items():
-        print(testPackage.testDisplayTable(maxLines = 10).table)
+        print(testPackage.testDisplayTable(maxLines = 3).table)
         if not testPackage.checkFileExists(tests.TestFile.OUTPUT):
             print(f"!!! Test has no output to check, skipping")
             continue

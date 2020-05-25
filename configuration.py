@@ -12,3 +12,7 @@ def getConfig():
     with open(os.path.join(CONF_DIRECTORY, "config.json")) as configFile:
         return json.load(configFile)
 
+def configFilePath(fileName):
+    """ Prepends CONF_DIRECTORY to the given filename. """
+    return os.path.join(CONF_DIRECTORY, fileName)
+
