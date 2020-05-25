@@ -15,8 +15,8 @@ class Checker(executables.Executable):
         checkerOutput, checkerTime = self.run(cmdArgs = [test.getFilename(tests.TestFile.INPUT), test.getFilename(tests.TestFile.OUTPUT), \
                         test.getFilename(tests.TestFile.DATA), outputFile])
         outputToParse = parsers.StringParser(checkerOutput)
-        score = outputToParse.readDataFromString(float)
-        remarks = outputToParse.readDataFromString(str, charSet = [])
+        score = outputToParse.readData(float)
+        remarks = outputToParse.readData(str, charSet = [])
         return (score, remarks)
 
 
