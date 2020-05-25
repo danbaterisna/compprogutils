@@ -9,14 +9,17 @@ class StringParser:
     def __init__(self, strng):
         self.inString = strng
         self.curID = 0
-    def curChar(self, moveToNext = False):
+    def curChar(self, moveToNext = False, exceptionOnEOF = False):
         if self.curID < len(self.inString):
             retVal = self.inString[self.curID]
             if moveToNext:
                 self.curID += 1
             return retVal
         else:
-            raise cpu_errors.UnexpectedEOF(f"""EOF on attempted char find""")
+            if exceptionOnEOF:
+                raise cpu_errors.UnexpectedEOF(f"""EOF on attempted char find""")
+            else:
+                return None
     def readUntil(self, charSet = WHITESPACE, skipOver = True):
         """ Read until a character in charSet is found. By default, this is whitespace.
         Skip over this character, unless skipOver is false.
