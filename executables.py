@@ -18,12 +18,14 @@ class Executable:
         - the name of the file where its code is stored.
 
         After compilation, exec_loc is computed, which is the location of the executable code.
+        precompiled is a flag cpu uses to determine if a program needs recompilation.
         """
-    def __init__(self, name, src):
+    def __init__(self, name, src, precompiled = False):
         self.name = name
         self.src = src
         self.exec_loc = None
         self.ext = os.path.splitext(src)[1][1:]
+        self.precompiled = precompiled
 
     def getCompileCommand(self, commandKey = None):
         """ Retrieve the executable's compile command from the cpu config file, without
@@ -107,7 +109,8 @@ compilation command {compileCommand} used. Make sure the corresponding key exist
         return {"_custom_type" : self.__class__.__name__,
                 "name" : self.name,
                 "src" : self.src,
-                "exec_loc" : self.exec_loc}
+                "exec_loc" : self.exec_loc
+                "precompiled" : self.precompiled}
     def __repr__(self):
         return f"{self.__class__.__name__}({self.name}, '{self.src}', exec_loc = {self.exec_loc})"
 
@@ -115,6 +118,7 @@ compilation command {compileCommand} used. Make sure the corresponding key exist
     def __deserialize__(cls, obj):
         result =  cls(obj["name"], obj["src"])
         result.exec_loc = obj["exec_loc"]
+        result.precompiled = False if "precompiled" not in obj else obj["precompiled"]
         return result
 
 

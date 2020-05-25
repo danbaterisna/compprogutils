@@ -9,7 +9,7 @@ import os, errno, shutil
 # For table pretty printing
 import terminaltables
 
-from . import cpu_errors, manifests, executables, generators, tests, solutions, checkers, utilities, configuration
+import cpu_errors, manifests, executables, generators, tests, solutions, checkers, utilities, configuration
 
 parser = ap.ArgumentParser(description = """Competitive programming utilities.
 
@@ -30,6 +30,7 @@ def subcommand(*sub_args, parent=subparser):
         for args, kwargs in sub_args:
             parser.add_argument(*args, **kwargs)
         parser.set_defaults(handler=func)
+        return func
     return decorator
 
 def _add_problem(problemName):
@@ -227,7 +228,8 @@ def test_solution(args):
     testsToRun = {testName: mf["tests"][testName] for testName in args.tests}
     solExec = mf["solutions"][args.sol_name]
     checkerExec = mf["checkers"][args.checker]
-    checkerExec.compile(outputDirectory = os.path.join("programs", "checkers"))
+    if not checkerExec.precompiled:
+        checkerExec.compile(outputDirectory = os.path.join("programs", "checkers"))
     print(f"All info ready. Running tests:")
     for testName, testPackage in testsToRun.items():
         print(testPackage.testDisplayTable(maxLines = 3).table)
