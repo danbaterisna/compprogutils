@@ -25,8 +25,8 @@ class Checker(executables.Executable):
 
 def checkFromStreams(func):
     """ Decorator for writing cpu checkers. Takes in a function that
-    expects 4 file stream arguments, and converts it into a function
-    that takes filenames from sys.argv. """
+    expects 4 file stream arguments and returns a (score, message) list,
+    and converts it into a function that takes filenames from sys.argv. """
     @functools.wraps(func)
     def decorated():
         argList = []
@@ -36,7 +36,7 @@ def checkFromStreams(func):
             else:
                 argList.append(None)
         try:
-            func(*argList)
+            print(*func(*argList))
         finally:
             for fileStream in argList:
                 if fileStream is not None:
