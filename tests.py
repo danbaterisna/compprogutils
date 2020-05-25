@@ -56,7 +56,7 @@ class Test:
         try:
             with self.getFileObject(testFile, "r") as fl:
                 if maxLines is not None:
-                    fileContents = '\n'.join(itertools.islice(fl, maxLines))
+                    fileContents = ''.join(itertools.islice(fl, maxLines))
                 else:
                     fileContents = fl.read()
         except FileNotFoundError:
