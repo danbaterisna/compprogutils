@@ -38,3 +38,6 @@ class SolutionTimeout(CPUException):
 class MalformedDataDelimiter(CPUException):
     """ Exception raised when more than one DATA_ESCAPE sequence is read.
     when processing solution output."""
+
+class UnexpectedEOF(CPUException):
+    """ Exception raised when an unexpected EOF is read during parsing. """
