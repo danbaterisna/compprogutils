@@ -3,3 +3,5 @@ B/
 C/
 __pycache__/
 *.json
+*.swp
+.gitignore
