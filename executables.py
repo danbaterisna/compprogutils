@@ -83,7 +83,7 @@ compilation command {compileCommand} used. Make sure the corresponding key exist
             raise cpu_errors.UncompiledRunAttempted(f"""The program {self.name} has not been compiled yet. """)
         @utilities.mapOverInputList
         def expandTemplate(s):
-            return s.format(name = self.name, file = self.exec_loc)
+            return s.format(name = self.name, file = os.path.abspath(os.path.expanduser(self.exec_loc)))
         exec_cmd = expandTemplate(self.getRunCommand())
         returnValue = [None, None]
         try:
@@ -109,7 +109,7 @@ compilation command {compileCommand} used. Make sure the corresponding key exist
         return {"_custom_type" : self.__class__.__name__,
                 "name" : self.name,
                 "src" : self.src,
-                "exec_loc" : self.exec_loc
+                "exec_loc" : self.exec_loc,
                 "precompiled" : self.precompiled}
     def __repr__(self):
         return f"{self.__class__.__name__}({self.name}, '{self.src}', exec_loc = {self.exec_loc})"
