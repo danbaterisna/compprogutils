@@ -1,7 +1,7 @@
 
 import os
 
-import cpu_errors
+from . import cpu_errors
 
 WHITESPACE = "\n\r\t "
 

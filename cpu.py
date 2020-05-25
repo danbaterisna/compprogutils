@@ -5,27 +5,11 @@ from string import ascii_uppercase
 import argparse as ap
 # For processing manifest files
 import json
-import os, errno
-# For custom errors
-import cpu_errors
-# For manifests managament
-import manifests
-# For moving files around
-import shutil
-# For loading and running executables
-import executables
-# For working with generators
-import generators
-# For working with tests
-import tests
+import os, errno, shutil
 # For table pretty printing
 import terminaltables
-# For working with solutions
-import solutions
 
-import checkers
-
-import utilities, configuration
+from . import cpu_errors, manifests, executables, generators, tests, solutions, checkers, utilities, configuration
 
 parser = ap.ArgumentParser(description = """Competitive programming utilities.
 
