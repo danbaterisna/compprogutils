@@ -1,5 +1,5 @@
 # For automatic problem name generation
-import itertools
+import itertools, functools
 from string import ascii_uppercase
 # For parsing cmdline args
 import argparse as ap
@@ -30,7 +30,10 @@ def subcommand(*sub_args, parent=subparser):
         for args, kwargs in sub_args:
             parser.add_argument(*args, **kwargs)
         parser.set_defaults(handler=func)
-        return func
+        @functools.wraps(func)
+        def decoratedFunc(**kwargs):
+            func(ap.Namespace(**kwargs))
+        return decoratedFunc
     return decorator
 
 def _add_problem(problemName):
@@ -50,6 +53,7 @@ def _add_problem(problemName):
             os.mkdir("checkers")
             os.mkdir("generators")
         os.mkdir("tests")
+        os.mkdir("outputs")
     print(f"Problem {problemName} created")
 
 
@@ -217,7 +221,10 @@ def make_output(args):
             argument("tests", type=str, nargs="*"))
 def test_solution(args):
     """ Run `tests` on the given solution. If tests is not given, use all tests. If --checker is given,
-    use the custom checker indicated. If --timeout is given, stop running the solution after -t seconds. """
+    use the custom checker indicated. If --timeout is given, stop running the solution after -t seconds.
+    As a function, return the minimum score given by the checker for any of the tests, or None if no
+    tests were run.
+    """
     mf = manifests.loadManifestType("problem")
     if args.tests == []:
         args.tests = list(mf["tests"].keys())
@@ -236,12 +243,13 @@ def test_solution(args):
         if not testPackage.checkFileExists(tests.TestFile.OUTPUT):
             print(f"!!! Test has no output to check, skipping")
             continue
-        outputCheckName = f"{args.sol_name}_out.txt"
+        outputCheckName = os.path.join("outputs", f"{args.sol_name}_out.txt")
         with open(outputCheckName, "w") as outputToCheck:
             with testPackage.getFileObject(tests.TestFile.INPUT, "r") as testInput:
                 solExec.run(timeout = args.timeout, fileInput = testInput,
                             fileToWrite = outputToCheck)
-        print(f"Solution output [TODO]")
+        print("Solution output:")
+        print(*utilities.wrapFileContentsList(outputCheckName, shutil.get_terminal_size()[1], 5), sep="\n")
         score, notes = checkerExec.checkOutputFile(testPackage, outputCheckName)
         print(f"Checker notes: {notes}")
         if score < 0:
