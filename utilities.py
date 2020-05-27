@@ -1,4 +1,4 @@
-import os, errno
+import os, errno, itertools
 from contextlib import contextmanager
 
 import cpu_errors
@@ -68,6 +68,24 @@ def wrapString(s, maxWidth, maxLines, indent = ">", placeholder="[...]"):
 def wrapStringList(*args, **kwargs):
     """ Returns wrapString's individual lines as a list. """
     return wrapString(*args, **kwargs).split("\n")
+
+def getFileContents(fileName, default = "[None]", maxLines = None):
+    """ Get the first maxLines file of fileName. Return default if the file does not exist. """
+    fileContents = default
+    try:
+        with open(fileName, "r")  as fl:
+            if maxLines is not None:
+                fileContents = ''.join(itertools.islice(fl, maxLines))
+            else:
+                fileContents = fl.read()
+    except FileNotFoundError:
+        pass
+    return fileContents
+
+def wrapFileContentsList(fileName, maxWidth, maxLines, indent = ">", placeholder = "[...]"):
+    """ Get the first maxLines lines of fileName, using the parameters given to wrapStringList. """
+    return wrapStringList(getFileContents(fileName, maxLines = maxLines),
+                        maxWidth, maxLines, indent, placeholder)
 
 def confirmPrompt(prompt):
     """ Displays a y/n confirmation prompt to the user. Returns True iff

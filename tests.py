@@ -52,16 +52,7 @@ class Test:
     def getFileContents(self, testFile, default = "[None]", maxLines = None):
         """ Returns a string with the contents of the file's first `maxLines` lines. If the file does not exist, return
         default. """
-        fileContents = default
-        try:
-            with self.getFileObject(testFile, "r") as fl:
-                if maxLines is not None:
-                    fileContents = ''.join(itertools.islice(fl, maxLines))
-                else:
-                    fileContents = fl.read()
-        except FileNotFoundError:
-            pass
-        return fileContents
+        return utilities.getFileContents(self.fileTable[testFile], default, maxLines)
 
     def __serialize__(self):
         """ Return a JSON-serializable dict which decodes to an equivalent test. """
@@ -89,10 +80,8 @@ class Test:
         if configuration.getConfig()["display_io_side_by_side"]:
             colWidth = (shutil.get_terminal_size().columns // 2) - 4
             table.table_data.append(["Input".ljust(colWidth), "Output".ljust(colWidth)])
-            inputLines = utilities.wrapStringList(self.getFileContents(TestFile.INPUT, maxLines = maxLines),
-                                              colWidth, maxLines)
-            outputLines = utilities.wrapStringList(self.getFileContents(TestFile.OUTPUT, maxLines = maxLines),
-                                                         colWidth, maxLines)
+            inputLines = utilities.wrapFileContentsList(self.fileTable[TestFile.INPUT], colWidth, maxLines)
+            outputLines = utilities.wrapFileContentsList(self.fileTable[TestFile.OUTPUT], colWidth, maxLines)
             tableHeight = max(len(inputLines), len(outputLines))
             inputLines = utilities.padListRight(inputLines, tableHeight, "")
             outputLines = utilities.padListRight(outputLines, tableHeight, "")
@@ -102,11 +91,9 @@ class Test:
             colWidth = shutil.get_terminal_size().columns - 5
             table.inner_row_border = True
             table.table_data.append(["Input".ljust(colWidth)])
-            table.table_data.append([utilities.wrapString(self.getFileContents(TestFile.INPUT, maxLines = maxLines),
-                                                         colWidth, maxLines)])
+            table.table_data.append(['\n'.join(utilities.wrapFileContentsList(self.fileTable[TestFile.INPUT], colWidth, maxLines))])
             table.table_data.append(["Output".ljust(colWidth)])
-            table.table_data.append([utilities.wrapString(self.getFileContents(TestFile.OUTPUT, maxLines = maxLines),
-                                                         colWidth, maxLines)])
+            table.table_data.append(['\n'.join(utilities.wrapFileContentsList(self.fileTable[TestFile.OUTPUT], colWidth, maxLines))])
             return table
 
     def deleteFiles(self):
