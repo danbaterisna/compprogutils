@@ -21,12 +21,12 @@ def argument(*name_or_flags, **kwargs):
     """ Helper function to format data for decorating with `subcommand`. """
     return name_or_flags, kwargs
 
-def subcommand(*sub_args, parent=subparser):
+def subcommand(*sub_args, parent=subparser, aliases = []):
     # stolen from https://gist.github.com/mivade/384c2c41c3a29c637cb6c603d4197f9f
     """ Helper function to make declaring subcommands more sane. """
     def decorator(func):
         commandName = func.__name__.replace('_', '-')
-        parser = parent.add_parser(commandName, description=func.__doc__)
+        parser = parent.add_parser(commandName, description=func.__doc__, aliases = aliases)
         for args, kwargs in sub_args:
             parser.add_argument(*args, **kwargs)
         parser.set_defaults(handler=func)
@@ -57,7 +57,7 @@ def _add_problem(problemName):
     print(f"Problem {problemName} created")
 
 
-@subcommand(argument("name", type=str))
+@subcommand(argument("name", type=str), aliases = ["ap"])
 def add_problem(args):
     """Add a problem with the given name to the contest."""
     # This guy just exposes the _add_problem_ function to the outside.
@@ -96,7 +96,8 @@ If this is a mistake, delete the file named .cpu.problem_manifest and try again.
     print("Contest creation successful!")
 
 @subcommand(argument("file_name", type=str), \
-            argument("--name", "-n", type=str))
+            argument("--name", "-n", type=str),
+            aliases = ["as"])
 def add_solution(args):
     """ Register a solution with CPU. If --name is not given, use the
     file name after stripping extensions. """
@@ -108,7 +109,8 @@ def add_solution(args):
     print(f"Solution {args.name} added")
 
 @subcommand(argument("sol_name", type=str), \
-            argument("--custom-compile", "-c", type=str))
+            argument("--custom-compile", "-c", type=str),
+            aliases = ["cs"])
 def compile_solution(args):
     """ Compile the registered solution. If -c is given, use the
         custom compilation command as stated in the config file. """
@@ -119,7 +121,8 @@ def compile_solution(args):
 @subcommand(argument("sol_name", type=str),
             argument("--time-limit", "-t", type=int),
             argument("--input-test", "-i", type=str),
-            argument("--silent", "-s", action="store_true"))
+            argument("--silent", "-s", action="store_true"),
+            aliases = ["rs"])
 def run_solution(args):
     """ Run the registered solution. Receive input from STDIN (or the specified test)
     and output to STDOUT. Print additional information if -s is not given."""
@@ -152,7 +155,8 @@ def delete_solution(args):
     print(f"Solution {args.sol_name} deleted!")
 
 @subcommand(argument("file_name", type=str),
-            argument("--name", "-n", type=str))
+            argument("--name", "-n", type=str),
+            aliases = ["ag"])
 def add_generator(args):
     """ Add an input generator. If --name is not given, use file_name after stripping extensions."""
     utilities.requireFileExists(args.file_name)
@@ -163,7 +167,8 @@ def add_generator(args):
     print(f"Generator {args.name} added!")
 
 @subcommand(argument("file_name", type=str),
-            argument("--name", "-n", type=str))
+            argument("--name", "-n", type=str),
+            aliases = ["ac"])
 def add_checker(args):
     """ Add a test checker. If --name is not given, use file_name after stripping extensions. """
     utilities.requireFileExists(args.file_name)
@@ -173,7 +178,8 @@ def add_checker(args):
         m["checkers"][args.name] = checkers.Checker(args.name, args.file_name)
     print(f"Checker {args.name} added!")
 
-@subcommand(argument("--with-gen", "-g", type=str))
+@subcommand(argument("--with-gen", "-g", type=str),
+            aliases = ["ag"])
 def add_test(args):
     """ Add a new test, reading data from stdin. Use an EOF signal (Ctrl-D) to
     separate test input and test output, and to end test output. If --with-gen
@@ -195,7 +201,8 @@ def add_test(args):
 
 @subcommand(argument("sol_name", type=str),
             argument("--timeout", "-t", type=int),
-            argument("tests", type=str, nargs="*"))
+            argument("tests", type=str, nargs="*"),
+            aliases = ["mo"])
 def make_output(args):
     """ Use the sol in sol_name to generate the output for the tests listed. If no tests are listed,
     the output generator is run for all tests. If --timeout is given, stop running the solution after
@@ -218,14 +225,16 @@ def make_output(args):
 @subcommand(argument("sol_name", type=str),
             argument("--checker", "-c", type=str),
             argument("--timeout", "-t", type=int),
-            argument("tests", type=str, nargs="*"))
+            argument("tests", type=str, nargs="*"),
+            aliases = ["ts"])
 def test_solution(args):
     """ Run `tests` on the given solution. If tests is not given, use all tests. If --checker is given,
     use the custom checker indicated. If --timeout is given, stop running the solution after -t seconds.
-    As a function, return the minimum score given by the checker for any of the tests, or None if no
-    tests were run.
+    As a function, return the minimum score given by the checker for any of the tests.
     """
     mf = manifests.loadManifestType("problem")
+    if args.checker is None:
+        args.checker = mf["default_checker"]
     if args.tests == []:
         args.tests = list(mf["tests"].keys())
     for testName in args.tests:
@@ -238,6 +247,7 @@ def test_solution(args):
     if not checkerExec.precompiled:
         checkerExec.compile(outputDirectory = os.path.join("programs", "checkers"))
     print(f"All info ready. Running tests:")
+    totalScore = 1
     for testName, testPackage in testsToRun.items():
         print(testPackage.testDisplayTable(maxLines = 3).table)
         if not testPackage.checkFileExists(tests.TestFile.OUTPUT):
@@ -251,22 +261,16 @@ def test_solution(args):
         print("Solution output:")
         print(*utilities.wrapFileContentsList(outputCheckName, shutil.get_terminal_size()[1], 5), sep="\n")
         score, notes = checkerExec.checkOutputFile(testPackage, outputCheckName)
-        print(f"Checker notes: {notes}")
-        if score < 0:
-            print(f"Checker verdict: Judgment Failure [{score}]")
-        elif score == 0:
-            print(f"Checker verdict: Wrong Answer [{score:.2f}]")
-        elif score < 1:
-            print(f"Checker verdict: Partially Correct [{score:.2f}]")
-        elif score == 1:
-            print(f"Checker verdict: Accepted [{score:.2f}]")
-        else:
-            print(f"!!! Unknown checker verdict [{score:.2f}]")
-        print("\n", end="")
+        print(f"Checker notes: {notes.rstrip()}")
+        print("Checker verdict:", checkers.getVerdictString(score), end="\n\n")
+        totalScore = min(totalScore, score)
+    print("Minimum score received:", checkers.getVerdictString(score))
+    return totalScore
 
 @subcommand(argument("--summary", "-s", action="store_true"),
             argument("--truncate", "-t", type=int, default=5),
-            argument("tests", type=str, nargs="*"))
+            argument("tests", type=str, nargs="*"),
+            aliases = ["lt"])
 def list_tests(args):
     """ List down the tests in `tests` for this problem. Only show up to TRUNCATE lines (default 3).
     If -s is enabled, do not show test contents. If no `tests` are given, output all tests. """
