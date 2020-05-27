@@ -22,3 +22,18 @@ class Checker(executables.Executable):
         remarks = outputToParse.readData(str, charSet = [])
         return (score, remarks)
 
+def getVerdictString(score):
+    scoreIndicator = f"[{score:.2f}]"
+    scoreText = None
+    if score < 0:
+        scoreText = "ERR"
+    elif score == 0:
+        scoreText = "WA"
+    elif score < 1:
+        scoreText = "PC"
+    elif score == 1:
+        scoreText = "AC"
+    else:
+        scoreText = "UNK"
+    return f"{scoreText} {scoreIndicator}"
+
