@@ -2,13 +2,11 @@
 # For manipulating path extensions
 import os
 # internals
-from compprogutils import configuration, cpu_errors
+from compprogutils import configuration, cpu_errors, utilities
 # For running commands
 import subprocess, shutil
 # For timing
 import time
-
-import utilities
 
 class Executable:
     """ An executable is something cpu can run. Each executable is composed of:

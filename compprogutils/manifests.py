@@ -11,9 +11,7 @@
 
 import json, os
 
-from compprogutils import executables, tests, solutions, checkers
-
-import configuration
+from compprogutils import executables, tests, solutions, checkers, cpu_errors, configuration
 
 from contextlib import contextmanager
 
@@ -32,7 +30,7 @@ def requireManifest(mtype):
     """ Raise a NotInCPUDirectory error if the manifest of type mtype
     cannot be found in the current working directory."""
     if mtype not in checkForManifest():
-        raise NotInCPUDirectory(f"""cpu does not recognize the directory you are in. Make sure
+        raise cpu_errors.NotInCPUDirectory(f"""cpu does not recognize the directory you are in. Make sure
 you are in a cpu directory. Look for the .cpu.{mtype}_manifest file.""")
 
 CUSTOM_CLASSES = [executables.Executable, tests.Test, executables.NonLocalExecutable, solutions.Solution,
