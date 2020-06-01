@@ -41,7 +41,7 @@ def _add_problem(problemName):
     - create a directory for the problem
     - create an empty manifest file for the problem
     - create the programs/ directory for the problem."""
-    with manifests.modifyManifest("problem") as m:
+    with manifests.modifyManifest("contest") as m:
         m[problemName] = os.path.join(problemName, "")
     os.mkdir(problemName)
     with utilities.cd(problemName):
@@ -90,6 +90,7 @@ If this is a mistake, delete the file named .cpu.problem_manifest and try again.
         args.by_name = list(itertools.islice(iterateAllStrings(), args.n))
     # Create an empty manifest file
     manifests.saveManifestTo(manifests.EMPTY_MANIFEST, ".cpu.contest_manifest.json")
+    print("Contest created, now adding problems")
     # Add problems
     for problemName in args.by_name:
         _add_problem(problemName)
@@ -179,7 +180,7 @@ def add_checker(args):
     print(f"Checker {args.name} added!")
 
 @subcommand(argument("--with-gen", "-g", type=str),
-            aliases = ["ag"])
+            aliases = ["at"])
 def add_test(args):
     """ Add a new test, reading data from stdin. Use an EOF signal (Ctrl-D) to
     separate test input and test output, and to end test output. If --with-gen
