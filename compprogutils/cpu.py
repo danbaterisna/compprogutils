@@ -141,8 +141,12 @@ def run_solution(args):
                     print("> Solution also gave the following data:")
                     print(solResult.data)
         else:
-            solResult = solExec.run(timeout = args.time_limit, pipeToTerminal = True)
-        if not args.silent:
+            try:
+                solResult = solExec.run(timeout = args.time_limit, pipeToTerminal = True)
+            except KeyboardInterrupt:
+                if not args.silent:
+                    print("<Solution interrupted>")
+        if not args.silent and solResult is not None:
             print(f"Solution executed in {solResult.timeElapsed:.3f} seconds")
 
 @subcommand(argument("sol_name", type=str))
