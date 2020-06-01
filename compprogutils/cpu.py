@@ -252,6 +252,7 @@ def test_solution(args):
     if not checkerExec.precompiled:
         checkerExec.compile(outputDirectory = os.path.join("programs", "checkers"))
     print(f"All info ready. Running tests:")
+    extraVerdicts = set()
     totalScore = 1
     for testName, testPackage in testsToRun.items():
         print(testPackage.testDisplayTable(maxLines = 3).table)
@@ -267,20 +268,27 @@ def test_solution(args):
                     print(f"Solution executed in {solutionRunData.timeElapsed:.3f} seconds")
                 except cpu_errors.SolutionTimeout as ce:
                     print(f"Solution exceeded time limit. Skipping.")
+                    extraVerdicts.add("TLE")
                     totalScore = 0
                     continue
                 except cpu_errors.SolutionExecution as ce:
                     print(f"Runtime error: {ce.message}")
+                    extraVerdicts.add("RTE")
                     print(f"Skipping.")
                     totalScore = 0
                     continue
+                except KeyboardInterrupt:
+                    print(f"Interrupted. Stopping testing.")
+                    return None
         print("Output:")
         print(*utilities.wrapFileContentsList(outputCheckName, shutil.get_terminal_size()[1], 5), sep="\n")
         score, notes = checkerExec.checkOutputFile(testPackage, outputCheckName)
         print(f"Checker notes: {notes.rstrip()}")
         print("Checker verdict:", checkers.getVerdictString(score), end="\n\n")
         totalScore = min(totalScore, score)
-    print("Minimum score received:", checkers.getVerdictString(score))
+    print("Minimum score received:", checkers.getVerdictString(totalScore))
+    if len(extraVerdicts) > 0:
+        print("Additionally, it received the following errors:", *extraVerdicts)
     return totalScore
 
 @subcommand(argument("--summary", "-s", action="store_true"),
