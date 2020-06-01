@@ -9,7 +9,7 @@ import os, errno, shutil
 # For table pretty printing
 import terminaltables
 
-import cpu_errors, manifests, executables, generators, tests, solutions, checkers, utilities, configuration
+from compprogutils import cpu_errors, manifests, executables, generators, tests, solutions, checkers, utilities, configuration
 
 parser = ap.ArgumentParser(description = """Competitive programming utilities.
 
@@ -256,9 +256,20 @@ def test_solution(args):
         outputCheckName = os.path.join("outputs", f"{args.sol_name}_out.txt")
         with open(outputCheckName, "w") as outputToCheck:
             with testPackage.getFileObject(tests.TestFile.INPUT, "r") as testInput:
-                solExec.run(timeout = args.timeout, fileInput = testInput,
-                            fileToWrite = outputToCheck)
-        print("Solution output:")
+                try:
+                    solutionRunData = solExec.run(timeout = args.timeout, fileInput = testInput,
+                                fileToWrite = outputToCheck)
+                    print(f"Solution executed in {solutionRunData.timeElapsed} seconds")
+                except cpu_errors.SolutionTimeout as ce:
+                    print(f"Solution exceeded time limit. Skipping.")
+                    totalScore = 0
+                    continue
+                except cpu_errors.SolutionExecution as ce:
+                    print(f"Runtime error: {ce.message}")
+                    print(f"Skipping.")
+                    totalScore = 0
+                    continue
+        print("Output:")
         print(*utilities.wrapFileContentsList(outputCheckName, shutil.get_terminal_size()[1], 5), sep="\n")
         score, notes = checkerExec.checkOutputFile(testPackage, outputCheckName)
         print(f"Checker notes: {notes.rstrip()}")
@@ -301,7 +312,7 @@ def delete_tests(args):
             del m["tests"][testName]
             print(f"Test {testName} deleted")
 
-if __name__ == "__main__":
+def main():
     args = parser.parse_args()
     if args.main_command is None:
         args.print_help()

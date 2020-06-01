@@ -1,4 +1,4 @@
-import manifests, cpu_errors, utilities
+from compprogutils import manifests, cpu_errors, utilities
 
 import os
 

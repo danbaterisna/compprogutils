@@ -1,10 +1,8 @@
 """ Module for working with executable files """
 # For manipulating path extensions
 import os
-# For accessing commands stored in the config file
-import configuration
-# For raising errors
-import cpu_errors
+# internals
+from compprogutils import configuration, cpu_errors
 # For running commands
 import subprocess, shutil
 # For timing

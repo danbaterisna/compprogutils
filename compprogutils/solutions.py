@@ -1,8 +1,6 @@
 """ Module for managing solutions. """
 
-import executables
-
-import cpu_errors
+from compprogutils import executables, cpu_errors
 
 class SolutionResult:
     """ Object that holds teh result of a solution. Has 3 members:

@@ -1,7 +1,7 @@
 import os, errno, itertools
 from contextlib import contextmanager
 
-import cpu_errors
+from compprogutils import cpu_errors
 
 import functools
 

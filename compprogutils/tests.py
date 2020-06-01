@@ -6,7 +6,7 @@ import shutil, os
 
 import textwrap, terminaltables
 
-import utilities, configuration
+from compprogutils import utilities, configuration
 
 TEST_PATH = "tests"
 

@@ -1,6 +1,6 @@
 import os
 
-import compprogutils.cpu_errors as cpu_errors
+from compprogutils import cpu_errors
 
 WHITESPACE = "\n\r\t "
 

@@ -11,7 +11,7 @@
 
 import json, os
 
-import executables, tests, solutions, checkers
+from compprogutils import executables, tests, solutions, checkers
 
 import configuration
 

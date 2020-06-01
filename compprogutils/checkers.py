@@ -4,11 +4,7 @@ import os, sys
 
 import functools
 
-import executables, tests
-
-import parsers
-
-import cpu_errors
+from compprogutils import executables, tests, parsers, cpu_errors
 
 class Checker(executables.Executable):
     """ A checker is an executable that validates test output. """
