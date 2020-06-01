@@ -260,7 +260,7 @@ def test_solution(args):
                 try:
                     solutionRunData = solExec.run(timeout = args.timeout, fileInput = testInput,
                                 fileToWrite = outputToCheck)
-                    print(f"Solution executed in {solutionRunData.timeElapsed} seconds")
+                    print(f"Solution executed in {solutionRunData.timeElapsed:.3f} seconds")
                 except cpu_errors.SolutionTimeout as ce:
                     print(f"Solution exceeded time limit. Skipping.")
                     totalScore = 0
