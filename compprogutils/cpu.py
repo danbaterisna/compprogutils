@@ -183,6 +183,15 @@ def add_checker(args):
         m["checkers"][args.name] = checkers.Checker(args.name, args.file_name)
     print(f"Checker {args.name} added!")
 
+@subcommand(argument("check_name", type=str))
+def set_checker(args):
+    """ Set the default checker to the named checker. """
+    mf = manifests.loadManifestType("problem")
+    utilities.requirePresentKey(mf["checkers"], args.check_name, "checker")
+    with manifests.modifyManifest("problem") as m:
+        m["default_checker"] = args.check_name
+
+
 @subcommand(argument("--with-gen", "-g", type=str),
             aliases = ["at"])
 def add_test(args):
