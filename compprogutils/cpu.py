@@ -338,7 +338,8 @@ def list_tests(args):
         else:
             print(mf["tests"][testName].testDisplayTable(args.truncate).table)
 
-@subcommand(argument("tests", type=str, nargs="*"))
+@subcommand(argument("tests", type=str, nargs="*"),
+            aliases = ["dt"])
 def delete_tests(args):
     """ Delete the tests in `tests`. """
     with manifests.modifyManifest("problem") as m:
