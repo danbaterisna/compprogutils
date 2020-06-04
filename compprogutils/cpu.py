@@ -32,7 +32,7 @@ def subcommand(*sub_args, parent=subparser, aliases = []):
         parser.set_defaults(handler=func)
         @functools.wraps(func)
         def decoratedFunc(**kwargs):
-            func(ap.Namespace(**kwargs))
+            return func(ap.Namespace(**kwargs))
         return decoratedFunc
     return decorator
 
@@ -197,7 +197,9 @@ def set_checker(args):
 def add_test(args):
     """ Add a new test, reading data from stdin. Use an EOF signal (Ctrl-D) to
     separate test input and test output, and to end test output. If --with-gen
-    is provided, use the stdout of the given generator program as input. """
+    is provided, use the stdout of the given generator program as input.
+
+    As a function, return the test ID."""
     with manifests.modifyManifest("problem") as m:
         newTest = tests.getUnusedTest(m["tests"])
         if args.with_gen is None:
@@ -212,6 +214,7 @@ def add_test(args):
             genExec.run(fileToWrite = newTest.getFileObject(tests.TestFile.INPUT, "wb"))
             print(f"Test generated successfully!")
         m["tests"][newTest.ID] = newTest
+        return newTest.ID
 
 @subcommand(argument("sol_name", type=str),
             argument("--timeout", "-t", type=int),
@@ -237,18 +240,16 @@ def make_output(args):
         print(f"Output generated!")
 
 @subcommand(argument("sol_name", type=str),
-            argument("--checker", "-c", type=str),
             argument("--timeout", "-t", type=int),
             argument("tests", type=str, nargs="*"),
             aliases = ["ts"])
 def test_solution(args):
-    """ Run `tests` on the given solution. If tests is not given, use all tests. If --checker is given,
-    use the custom checker indicated. If --timeout is given, stop running the solution after -t seconds.
+    """ Run `tests` on the given solution. If tests is not given, use all tests.
+    If --timeout is given, stop running the solution after -t seconds.
     As a function, return the minimum score given by the checker for any of the tests.
     """
     mf = manifests.loadManifestType("problem")
-    if args.checker is None:
-        args.checker = mf["default_checker"]
+    args.checker = mf["default_checker"]
     if args.tests == []:
         args.tests = list(mf["tests"].keys())
     for testName in args.tests:
@@ -286,9 +287,6 @@ def test_solution(args):
                     print(f"Skipping.")
                     totalScore = 0
                     continue
-                except KeyboardInterrupt:
-                    print(f"Interrupted. Stopping testing.")
-                    return None
         print("Output:")
         print(*utilities.wrapFileContentsList(outputCheckName, shutil.get_terminal_size()[1], 5), sep="\n")
         score, notes = checkerExec.checkOutputFile(testPackage, outputCheckName)
@@ -299,6 +297,28 @@ def test_solution(args):
     if len(extraVerdicts) > 0:
         print("Additionally, it received the following errors:", *extraVerdicts)
     return totalScore
+
+@subcommand(argument("stress_sol_name", type=str),
+            argument("ac_sol_name", type=str),
+            argument("gen_name", type=str),
+            argument("-r", "--rounds", type=int, default=-1))
+def stress_test(args):
+    """ Writes a test for which stress_sol_name is marked wrong, using ac_sol_name to generate
+    correct output. Performs (--rounds) attempts (by default, infinite) """
+    # recompile the generator
+    failedRounds = 0
+    while args.rounds == -1 or failedRounds < args.rounds:
+        print(f"Attempt {failedRounds + 1}:")
+        attemptTest = add_test(with_gen = args.gen_name)
+        make_output(sol_name = args.ac_sol_name, tests = [attemptTest], timeout = None)
+        if test_solution(sol_name = args.stress_sol_name, timeout = None, tests = [attemptTest]) < 1:
+            print(f"Solution {args.stress_sol_name} breaks under test {attemptTest}")
+            break
+        else:
+            delete_tests(tests = [attemptTest])
+        failedRounds += 1
+    else:
+        print(f"Failed to break solution {args.stress_sol_name}")
 
 @subcommand(argument("--summary", "-s", action="store_true"),
             argument("--truncate", "-t", type=int, default=5),
@@ -344,6 +364,8 @@ def main():
         except cpu_errors.CPUException as e:
             print(f"A {e.__class__.__name__} error occured while processing this command!\n")
             print("Details:", e.message)
+        except KeyboardInterrupt:
+            print("<Execution interrupted>")
         except Exception as e:
             print(f"An internal error occured while processing this command! Re-raising...")
             raise e
