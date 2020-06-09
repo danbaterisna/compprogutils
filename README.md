@@ -2,7 +2,8 @@
 
 Because I got too lazy to type.
 
-Install by pulling then running `pip install .`. As of now, requires you have a `~/.cpu` folder with some needed files. I'll figure out a way to package this in.
+Install by pulling then running `pip install .`. This might go on PyPI once it gets polished enough.
+As of now, requires you have a `~/.cpu` folder with some needed files. I'll figure out a way to package this in.
 
 ##### Basic usage:
 
