@@ -43,3 +43,5 @@ Most commands you'll need to run a lot have aliases.
 - `online-judge-tools`-style `make-contest`
 - More robust and usable `checker_utils` library
 
+Contributions are accepted (and appreciated).
+
